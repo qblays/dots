@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""Clone or update external config dependencies.
+
+These repositories are runtime dependencies, not dotfiles. Keep them as normal
+Git checkouts under $HOME so their own tools can inspect and update them.
+"""
+
+from __future__ import annotations
+
+import argparse
+import shutil
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Optional
+
+
+@dataclass(frozen=True)
+class ExternalRepo:
+    name: str
+    url: str
+    path: Path
+    recursive: bool = False
+
+
+EXTERNAL_REPOS = (
+    ExternalRepo(
+        name="tpm",
+        url="https://github.com/tmux-plugins/tpm",
+        path=Path("~/.tmux/plugins/tpm"),
+    ),
+    ExternalRepo(
+        name="zinit",
+        url="https://github.com/zdharma-continuum/zinit",
+        path=Path("~/.config/zsh/zinit"),
+    ),
+    ExternalRepo(
+        name="vifm-colors",
+        url="https://github.com/vifm/vifm-colors",
+        path=Path("~/.config/vifm/colors"),
+    ),
+    ExternalRepo(
+        name="base16-shell",
+        url="https://github.com/chriskempson/base16-shell.git",
+        path=Path("~/.config/base16-shell"),
+    ),
+)
+
+
+class SyncError(Exception):
+    pass
+
+
+def run(cmd: List[str], *, cwd: Optional[Path] = None, dry_run: bool = False) -> str:
+    label = " ".join(cmd)
+    if cwd is not None:
+        label = f"(cd {cwd} && {label})"
+
+    if dry_run:
+        print(f"would run: {label}")
+        return ""
+
+    result = subprocess.run(
+        cmd,
+        cwd=cwd,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        details = result.stderr.strip() or result.stdout.strip()
+        raise SyncError(f"{label} failed\n{details}")
+    return result.stdout.strip()
+
+
+def canonical_url(url: str) -> str:
+    normalized = url.rstrip("/")
+    if normalized.endswith(".git"):
+        normalized = normalized[:-4]
+    return normalized
+
+
+def has_payload(path: Path) -> bool:
+    if not path.exists():
+        return False
+
+    for child in path.rglob("*"):
+        if child.is_file() or child.is_symlink():
+            return True
+    return False
+
+
+def is_git_checkout(path: Path) -> bool:
+    if not path.exists():
+        return False
+
+    result = subprocess.run(
+        ["git", "-C", str(path), "rev-parse", "--is-inside-work-tree"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode == 0 and result.stdout.strip() == "true"
+
+
+def validate_checkout(repo: ExternalRepo, path: Path, *, dry_run: bool) -> None:
+    actual_url = run(["git", "-C", str(path), "remote", "get-url", "origin"], dry_run=dry_run)
+    if actual_url and canonical_url(actual_url) != canonical_url(repo.url):
+        raise SyncError(
+            f"{repo.name}: origin is {actual_url!r}, expected {repo.url!r}"
+        )
+
+    status = run(["git", "-C", str(path), "status", "--porcelain"], dry_run=dry_run)
+    if status:
+        raise SyncError(f"{repo.name}: checkout has local changes; update skipped")
+
+
+def clone_repo(repo: ExternalRepo, path: Path, *, dry_run: bool) -> None:
+    if path.exists() and not is_git_checkout(path):
+        if has_payload(path):
+            raise SyncError(f"{repo.name}: {path} exists and is not an empty Git checkout")
+        if dry_run:
+            print(f"{repo.name}: would remove empty directory tree at {path}")
+        else:
+            print(f"{repo.name}: removing empty directory tree at {path}")
+            shutil.rmtree(path)
+
+    if dry_run:
+        print(f"would create parent directory: {path.parent}")
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    cmd = ["git", "clone", repo.url, str(path)]
+    if repo.recursive:
+        cmd.insert(2, "--recursive")
+    run(cmd, dry_run=dry_run)
+
+
+def update_repo(repo: ExternalRepo, path: Path, *, dry_run: bool) -> None:
+    validate_checkout(repo, path, dry_run=dry_run)
+    run(["git", "-C", str(path), "pull", "--ff-only"], dry_run=dry_run)
+    if repo.recursive:
+        run(
+            ["git", "-C", str(path), "submodule", "update", "--init", "--recursive"],
+            dry_run=dry_run,
+        )
+
+
+def sync_repo(repo: ExternalRepo, *, dry_run: bool) -> None:
+    path = repo.path.expanduser()
+    if is_git_checkout(path):
+        print(f"{repo.name}: updating {path}")
+        update_repo(repo, path, dry_run=dry_run)
+        return
+
+    print(f"{repo.name}: cloning into {path}")
+    clone_repo(repo, path, dry_run=dry_run)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "names",
+        nargs="*",
+        help="sync only these entries; defaults to all entries",
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="show configured external repositories and exit",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="print commands without changing anything",
+    )
+    return parser.parse_args()
+
+
+def selected_repos(names: List[str]) -> List[ExternalRepo]:
+    by_name = {repo.name: repo for repo in EXTERNAL_REPOS}
+    if not names:
+        return list(EXTERNAL_REPOS)
+
+    unknown = sorted(set(names) - set(by_name))
+    if unknown:
+        raise SyncError(f"unknown external repo(s): {', '.join(unknown)}")
+
+    return [by_name[name] for name in names]
+
+
+def main() -> int:
+    args = parse_args()
+    try:
+        repos = selected_repos(args.names)
+    except SyncError as error:
+        print(error, file=sys.stderr)
+        return 2
+
+    if args.list:
+        for repo in repos:
+            print(f"{repo.name}\t{repo.path.expanduser()}\t{repo.url}")
+        return 0
+
+    failures = []
+    for repo in repos:
+        try:
+            sync_repo(repo, dry_run=args.dry_run)
+        except SyncError as error:
+            failures.append(str(error))
+            print(f"error: {error}", file=sys.stderr)
+
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

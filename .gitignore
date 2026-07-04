@@ -1,0 +1,29 @@
+# Local/editor junk
+*~
+*.bak
+*.log
+*.tmp
+*.swp
+*.swo
+*.py[cod]
+__pycache__/
+.DS_Store
+
+# Lock files and generated app state should live in $HOME, not in packages.
+*.lock
+*.lock.*
+*-lock.*
+lockfile
+Lockfile
+
+# App-specific state files that can be recreated by the application.
+neovim/.config/nvim/lazy-lock.json
+vifm/.config/vifm/vifm-help.txt
+vifm/.config/vifm/vifminfo.json
+vifm/.config/vifm/scripts/README
+zsh/.config/zsh/.zfunc/_*
+
+# Runtime/plugin directories that should not be kept in the config repo.
+tmux/.tmux/plugins/
+vifm/.config/vifm/colors/
+zsh/.config/zsh/zinit/

@@ -1,0 +1,7 @@
+[[plugin.deps]]
+use = "yazi-rs/plugins:chmod"
+rev = "5d461d8"
+hash = "5b1c276b75cae91cbbdbe7863f39a540"
+
+[flavor]
+deps = []

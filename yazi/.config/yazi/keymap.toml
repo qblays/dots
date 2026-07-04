@@ -1,0 +1,5 @@
+[[manager.prepend_keymap]]
+on   = [ "p" ]
+run  = "plugin chmod"
+desc = "Chmod on selected files"
+
