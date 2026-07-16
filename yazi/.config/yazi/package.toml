@@ -3,5 +3,10 @@ use = "yazi-rs/plugins:chmod"
 rev = "5d461d8"
 hash = "5b1c276b75cae91cbbdbe7863f39a540"
 
+[[plugin.deps]]
+use = "WhoSowSee/whoosh"
+rev = "ec2e6f7"
+hash = "59e984146fa6b20c441817444d5fdd61"
+
 [flavor]
 deps = []

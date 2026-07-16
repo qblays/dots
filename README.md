@@ -32,3 +32,7 @@ git add neovim/.config/nvim/path/to/file.lua
 Do not add generated files such as lock files, editor swap files, generated zsh
 completions, Vifm state, or plugin install directories. Those should stay in
 `$HOME` and are ignored if they accidentally appear in the repo.
+
+
+# TO add:
+git, emacs doom, lazygit, plugins for yazi
