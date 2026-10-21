@@ -8,7 +8,7 @@ the Git working tree.
 Install or refresh packages from the repo root:
 
 ```sh
-stow -R alacritty mpv neovim tmux vifm zsh
+stow -R alacritty doom mpv neovim tmux vifm zsh
 ```
 
 Install or update external runtime repositories:
@@ -35,4 +35,4 @@ completions, Vifm state, or plugin install directories. Those should stay in
 
 
 # TO add:
-git, emacs doom, lazygit, plugins for yazi
+git, lazygit, plugins for yazi
