@@ -1,0 +1,66 @@
+;; Keyboard remaps, migrated from keyd.
+;;
+;; caps        tap: Esc, hold: Ctrl
+;; lalt+hjkl   arrows
+;; lalt+u/o    Home/End
+;; lalt+other  plain Alt, so Alt+Tab and friends keep working
+
+(defcfg
+  ;; Lets tap-hold-press see every key, not only the ones in defsrc.
+  process-unmapped-keys yes
+  log-layer-changes no
+  ;; Nothing to remap here, and kanata's output device can't emit all its keys.
+  linux-dev-names-exclude ("Asus WMI hotkeys")
+)
+
+(defsrc
+  caps lalt h j k l u o
+)
+
+(defvirtualkeys
+  ;; Apps like Firefox treat a lone Alt press and release as "open the menu".
+  ;; Tapping this while Alt is down stops the nav keys from looking like that.
+  guard rctl
+
+  left (unmod (lalt) left)
+  down (unmod (lalt) down)
+  up   (unmod (lalt) up)
+  rght (unmod (lalt) rght)
+  home (unmod (lalt) home)
+  end  (unmod (lalt) end)
+)
+
+;; Tap the guard, swap Alt for the target key while held, then guard the
+;; re-pressed Alt. Virtual key actions run in order, so a very fast tap can't
+;; release the target before pressing it and leave it stuck, as a macro could.
+(deftemplate nav (vkey)
+  (multi
+    (on-press tap-vkey guard)
+    (on-press press-vkey $vkey)
+    (on-release release-vkey $vkey)
+    (on-release tap-vkey guard)
+  )
+)
+
+(defalias
+  ;; Ctrl goes down immediately so Ctrl+click works without waiting. The tap
+  ;; action only fires if no other key was pressed, and the long timeout means
+  ;; a long lone hold still ends in Esc.
+  cap (multi lctl (tap-hold-press 0 60000 (unmod (lctl) esc) XX))
+  alt (multi lalt (layer-while-held nav))
+
+  lft (t! nav left)
+  dwn (t! nav down)
+  upp (t! nav up)
+  rgt (t! nav rght)
+  hom (t! nav home)
+  end (t! nav end)
+)
+
+(deflayer base
+  @cap @alt _    _    _    _    _    _
+)
+
+(deflayer nav
+  _    _    @lft @dwn @upp @rgt @hom @end
+)

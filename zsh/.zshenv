@@ -38,7 +38,7 @@ export XDG_CACHE_HOME="$HOME/.cache"
 # Default programs:
 export EDITOR="nvim"
 export TERMINAL="alacritty"
-export BROWSER="vivaldi-snapshot"
+export BROWSER="vivaldi"
 export PYTHON_HOST_PROG='/home/gorm/envs/neovim/bin/python'
 export PYTHON3_HOST_PROG='/home/gorm/envs/neovim/bin/python'
 #export XAUTHORITY="$XDG_RUNTIME_DIR/Xauthority" # This line will break some DMs.
@@ -53,7 +53,6 @@ export PASSWORD_STORE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/password-store"
 export TMUX_TMPDIR="$XDG_RUNTIME_DIR"
 export ANDROID_SDK_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/android"
 export CARGO_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/cargo"
-export JAVA_HOME="/usr/lib/jvm/java-14-openjdk"
 export GOPATH="${HOME}/proj/go"
 export ANSIBLE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/ansible/ansible.cfg"
 export UNISON="${XDG_DATA_HOME:-$HOME/.local/share}/unison"

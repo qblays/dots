@@ -6,7 +6,7 @@ fpath+=~/.config/zsh/.zfunc
 compinit -u
 _comp_options+=(globdots)		# Include hidden files.
 source ~/.config/zsh/zinit/zinit.zsh
-zinit light chriskempson/base16-shell
+#zinit light chriskempson/base16-shell
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.config/zsh/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -90,9 +90,9 @@ export LC_ALL='en_US.UTF-8'
 export ZSH_TMUX_FORCEUTF8=true
 export SUDO_ASKPASS=${HOME}/.local/bin/rofi_pass
 export GOPATH=${HOME}/proj/go
-export ZSH_SYSTEM_CLIPBOARD_METHOD='tmux'
+#export ZSH_SYSTEM_CLIPBOARD_METHOD='tmux'
 
-export tNavigator_INTERNALS_CHECK_RESTART=yes
+#export tNavigator_INTERNALS_CHECK_RESTART=yes
 
 # Use vim keys in tab complete menu:
 bindkey -M menuselect 'h' vi-backward-char

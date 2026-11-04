@@ -8,7 +8,7 @@ the Git working tree.
 Install or refresh packages from the repo root:
 
 ```sh
-stow -R alacritty doom mpv neovim tmux vifm zsh
+stow -R alacritty kanata doom mpv neovim tmux vifm zsh
 ```
 
 Install or update external runtime repositories:
@@ -33,6 +33,24 @@ Do not add generated files such as lock files, editor swap files, generated zsh
 completions, Vifm state, or plugin install directories. Those should stay in
 `$HOME` and are ignored if they accidentally appear in the repo.
 
+
+## Keyboard remapping (kanata)
+
+`kanata` runs as the root system service from its package, which reads
+`/etc/kanata.kbd`. Link the config there once:
+
+```sh
+stow -R kanata
+sudo ln -s ~/.config/kanata/kanata.kbd /etc/kanata.kbd
+sudo systemctl enable --now kanata
+```
+
+After editing the config:
+
+```sh
+kanata --cfg ~/.config/kanata/kanata.kbd --check
+sudo systemctl restart kanata
+```
 
 # TO add:
 git, lazygit, plugins for yazi
